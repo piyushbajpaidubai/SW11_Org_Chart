@@ -189,6 +189,7 @@ document.getElementById('modalCreate').addEventListener('click',()=>{const name=
 modalGroupName.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('modalCreate').click();});
 document.getElementById('btnReset').addEventListener('click',()=>{if(!confirm('Reset layout? All groups will be cleared.'))return;groups.forEach(g=>document.querySelector('[data-gid="'+g.id+'"]')?.remove());groups=[];pool.innerHTML='';TEAM.forEach(m=>pool.appendChild(makeCard(m)));groupCountEl.textContent=0;refreshPoolMsg();});
 makeDropZone(pool,'pool');
+TEAM.forEach(m=>pool.appendChild(makeCard(m)));
 const towerGroup=createGroup('Tower Package',COLORS[0]);
 const podiumGroup=createGroup('Podium & Basement Package',COLORS[2]);
 const facadeGroup=createGroup('Facade Package',COLORS[5]);

@@ -72,8 +72,14 @@
     .group-count{font-size:9px;letter-spacing:0.08em;color:var(--muted);background:rgba(0,0,0,0.05);padding:2px 7px;border-radius:10px;white-space:nowrap}
     .group-delete-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;line-height:1;padding:0 2px;transition:color 0.2s}
     .group-delete-btn:hover{color:#dc2626}
-    .group-cards{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;min-height:0;align-items:flex-start;transition:background 0.2s}
+    /* Hierarchy layout: lead row on top, members row below */
+    .group-cards{display:flex;flex-direction:column;gap:8px;padding:10px 12px;min-height:0;transition:background 0.2s}
     .group-cards.drag-over{background:rgba(160,120,42,0.04);border-radius:0 0 6px 6px}
+    .group-lead-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+    .group-members-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+    /* Style the lead card inside a group differently to show hierarchy */
+    .group-lead-row .card{border-left:2px solid var(--gold);background:rgba(255,255,255,0.95)}
+    .group-lead-row .card::before{opacity:0.5}
     .drop-placeholder{width:150px;min-height:82px;border:2px dashed rgba(160,120,42,0.35);border-radius:3px;background:rgba(160,120,42,0.04);pointer-events:none}
     /* Trash zone */
     #trash-zone{display:flex;align-items:center;justify-content:center;gap:10px;margin:24px auto 8px auto;width:340px;padding:14px 24px;border:2px dashed rgba(180,60,60,0.35);border-radius:10px;color:rgba(180,60,60,0.55);font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;background:rgba(255,255,255,0.35);transition:background 0.2s,border-color 0.2s,color 0.2s,transform 0.15s;cursor:default}
@@ -176,8 +182,11 @@
     </div>div>
   </div>div>
   <script>
+    // Lead roles: these members appear in the top hierarchy row of their sub-group
+    const LEAD_ROLES=['Technical Lead','Team Lead'];
+
     const TEAM=[
-      {id:'SM',name:'Salvador Murino',role:'Senior Designer'},
+      {id:'SM',name:'Salvador Murino',role:'Team Lead'},
       {id:'YS',name:'Yara Soliman',role:'Design Architect'},
       {id:'DE',name:'Dina Elfaham',role:'Design Architect'},
       {id:'BC',name:'Bruno Cassol',role:'BIM Lead'},
@@ -193,16 +202,91 @@
     let groups=[],dragMemberId=null,draggedGroupId=null,groupIdSeq=0,selectedColor=COLORS[1];
     const pool=document.getElementById('pool'),groupsArea=document.getElementById('groupsArea'),poolSection=document.getElementById('poolSection'),groupCountEl=document.getElementById('groupCount');
 
-    function makeCard(m){const el=document.createElement('div');el.className='card';el.draggable=true;el.dataset.mid=m.id;el.innerHTML='<div class="card-initials">'+m.id+'</div><div class="card-name">'+m.name+'</div><div class="card-role">'+m.role+'</div>';el.addEventListener('dragstart',e=>{dragMemberId=m.id;draggedGroupId=null;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',m.id);setTimeout(()=>{const ph=document.createElement('div');ph.className='drop-placeholder';ph.id='ph_'+m.id;if(el.parentNode){el.parentNode.insertBefore(ph,el);el.style.visibility='hidden';}},0);});el.addEventListener('dragend',()=>{el.classList.remove('dragging');el.style.visibility='';document.getElementById('ph_'+m.id)?.remove();document.querySelectorAll('.drag-over').forEach(z=>z.classList.remove('drag-over'));dragMemberId=null;});return el;}
-    function makeDropZone(el,zid){el.addEventListener('dragover',e=>{if(draggedGroupId)return;e.preventDefault();el.classList.add('drag-over');});el.addEventListener('dragleave',e=>{if(!el.contains(e.relatedTarget))el.classList.remove('drag-over');});el.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();el.classList.remove('drag-over');if(!dragMemberId)return;moveMember(dragMemberId,zid);});}
-    function moveMember(mid,tz){document.querySelectorAll('[data-mid="'+mid+'"]').forEach(e=>e.remove());groups.forEach(g=>g.members=g.members.filter(x=>x!==mid));const m=TEAM.find(x=>x.id===mid);if(!m)return;if(tz==='pool'){pool.appendChild(makeCard(m));}else{const g=groups.find(g=>g.id===tz);if(!g)return;g.members.push(mid);document.querySelector('[data-gid="'+g.id+'"] .group-cards').appendChild(makeCard(m));}refreshGroupCounts();refreshPoolMsg();groupCountEl.textContent=groups.length;}
-    function refreshGroupCounts(){groups.forEach(g=>{const el=document.querySelector('[data-gid="'+g.id+'"] .group-count');if(el)el.textContent=g.members.length+' member'+(g.members.length!==1?'s':'');});}
-    function refreshPoolMsg(){let msg=pool.querySelector('.pool-empty-msg');const hasCards=pool.querySelectorAll('.card').length>0;if(!hasCards&&groups.length>0){if(!msg){msg=document.createElement('div');msg.className='pool-empty-msg';msg.textContent='All members assigned — drag back to ungroup';pool.appendChild(msg);}}else{msg?.remove();}}
+    function isLeadRole(role){return LEAD_ROLES.includes(role);}
+
+        function makeCard(m){
+            const el=document.createElement('div');
+            el.className='card';
+            el.draggable=true;
+            el.dataset.mid=m.id;
+            el.innerHTML='<div class="card-initials">'+m.id+'</div><div class="card-name">'+m.name+'</div><div class="card-role">'+m.role+'</div>';
+            el.addEventListener('dragstart',e=>{
+                  dragMemberId=m.id;
+                  draggedGroupId=null;
+                  el.classList.add('dragging');
+                  e.dataTransfer.effectAllowed='move';
+                  e.dataTransfer.setData('text/plain',m.id);
+                  setTimeout(()=>{
+                          const ph=document.createElement('div');
+                          ph.className='drop-placeholder';
+                          ph.id='ph_'+m.id;
+                          if(el.parentNode){el.parentNode.insertBefore(ph,el);el.style.visibility='hidden';}
+                  },0);
+    });
+            el.addEventListener('dragend',()=>{
+                  el.classList.remove('dragging');
+                  el.style.visibility='';
+                  document.getElementById('ph_'+m.id)?.remove();
+                  document.querySelectorAll('.drag-over').forEach(z=>z.classList.remove('drag-over'));
+                  dragMemberId=null;
+            });
+            return el;
+        }
+
+    function makeDropZone(el,zid){
+        el.addEventListener('dragover',e=>{if(draggedGroupId)return;e.preventDefault();el.classList.add('drag-over');});
+        el.addEventListener('dragleave',e=>{if(!el.contains(e.relatedTarget))el.classList.remove('drag-over');});
+        el.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();el.classList.remove('drag-over');if(!dragMemberId)return;moveMember(dragMemberId,zid);});
+    }
+
+    function getGroupRows(gid){
+        const block=document.querySelector('[data-gid="'+gid+'"]');
+        if(!block)return{leadRow:null,membersRow:null};
+        return{leadRow:block.querySelector('.group-lead-row'),membersRow:block.querySelector('.group-members-row')};
+                                }
+
+    function moveMember(mid,tz){
+        document.querySelectorAll('[data-mid="'+mid+'"]').forEach(e=>e.remove());
+        groups.forEach(g=>g.members=g.members.filter(x=>x!==mid));
+        const m=TEAM.find(x=>x.id===mid);
+        if(!m)return;
+        if(tz==='pool'){
+              pool.appendChild(makeCard(m));
+        } else {
+              const g=groups.find(g=>g.id===tz);
+              if(!g)return;
+              g.members.push(mid);
+              const{leadRow,membersRow}=getGroupRows(g.id);
+              if(isLeadRole(m.role)&&leadRow){
+                      leadRow.appendChild(makeCard(m));
+              } else if(membersRow){
+                      membersRow.appendChild(makeCard(m));
+              }
+        }
+        refreshGroupCounts();
+        refreshPoolMsg();
+        groupCountEl.textContent=groups.length;
+    }
+
+    function refreshGroupCounts(){
+        groups.forEach(g=>{
+              const el=document.querySelector('[data-gid="'+g.id+'"] .group-count');
+              if(el)el.textContent=g.members.length+' member'+(g.members.length!==1?'s':'');
+        });
+    }
+
+    function refreshPoolMsg(){
+        let msg=pool.querySelector('.pool-empty-msg');
+        const hasCards=pool.querySelectorAll('.card').length>0;
+        if(!hasCards&&groups.length>0){
+              if(!msg){msg=document.createElement('div');msg.className='pool-empty-msg';msg.textContent='All members assigned — drag back to ungroup';pool.appendChild(msg);}
+        } else{msg?.remove();}
+    }
 
     function enableGroupDrag(block){
         const header=block.querySelector('.group-header');
         if(!header)return;
-          block.draggable=false;
+        block.draggable=false;
         header.draggable=true;
         header.addEventListener('dragstart',e=>{
               draggedGroupId=block.dataset.gid;
@@ -215,16 +299,16 @@
         header.addEventListener('dragend',()=>{
               block.classList.remove('group-dragging');
               draggedGroupId=null;
-              document.querySelectorAll('.group-block').forEach(b=>b.classList.remove('group-drag-over-top','group-drag-over-bottom'));
+                                                  document.querySelectorAll('.group-block').forEach(b=>b.classList.remove('group-drag-over-top','group-drag-over-bottom'));
         });
-        block.addEventListener('dragover',e=>{
-              if(!draggedGroupId||draggedGroupId===block.dataset.gid)return;
-              e.preventDefault();e.stopPropagation();
-              e.dataTransfer.dropEffect='move';
-              const rect=block.getBoundingClientRect();
-              document.querySelectorAll('.group-block').forEach(b=>b.classList.remove('group-drag-over-top','group-drag-over-bottom'));
-              block.classList.add(e.clientY<rect.top+rect.height/2?'group-drag-over-top':'group-drag-over-bottom');
-        });
+      block.addEventListener('dragover',e=>{
+            if(!draggedGroupId||draggedGroupId===block.dataset.gid)return;
+            e.preventDefault();e.stopPropagation();
+            e.dataTransfer.dropEffect='move';
+            const rect=block.getBoundingClientRect();
+            document.querySelectorAll('.group-block').forEach(b=>b.classList.remove('group-drag-over-top','group-drag-over-bottom'));
+            block.classList.add(e.clientY<rect.top+rect.height/2?'group-drag-over-top':'group-drag-over-bottom');
+      });
         block.addEventListener('dragleave',e=>{if(!block.contains(e.relatedTarget))block.classList.remove('group-drag-over-top','group-drag-over-bottom');});
         block.addEventListener('drop',e=>{
               const data=e.dataTransfer.getData('text/plain');
@@ -233,7 +317,7 @@
               const srcGid=data.replace('group:','');
               if(srcGid===block.dataset.gid)return;
               const src=document.querySelector('[data-gid="'+srcGid+'"]');
-        if(!src)return;
+              if(!src)return;
               const rect=block.getBoundingClientRect();
               block.classList.remove('group-drag-over-top','group-drag-over-bottom');
               if(e.clientY<rect.top+rect.height/2){groupsArea.insertBefore(src,block);}
@@ -241,7 +325,44 @@
         });
     }
 
-    function createGroup(name,color){const id='g'+(++groupIdSeq);const group={id,name,color,members:[]};groups.push(group);const block=document.createElement('div');block.className='group-block';block.dataset.gid=id;block.style.borderLeftColor=color;block.innerHTML='<div class="group-header"><div class="group-color-swatch" style="background:'+color+'"></div><input class="group-name-input" type="text" value="'+name+'" readonly/><span class="group-count">0 members</span><button class="group-delete-btn" title="Delete group">\xd7</button></div><div class="group-cards"></div>';const inp=block.querySelector('.group-name-input');inp.addEventListener('dblclick',()=>{inp.removeAttribute('readonly');inp.focus();inp.select();});inp.addEventListener('blur',()=>{inp.setAttribute('readonly',true);group.name=inp.value||'Untitled';inp.value=group.name;});inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});block.querySelector('.group-delete-btn').addEventListener('click',()=>{const mc=[...group.members];block.remove();groups=groups.filter(x=>x.id!==id);mc.forEach(mid=>{const m=TEAM.find(x=>x.id===mid);if(m)pool.appendChild(makeCard(m));});refreshGroupCounts();refreshPoolMsg();groupCountEl.textContent=groups.length;});const cel=block.querySelector('.group-cards');makeDropZone(cel,id);makeDropZone(block.querySelector('.group-header'),id);block.addEventListener('dragover',e=>{if(draggedGroupId)return;e.preventDefault();cel.classList.add('drag-over');});block.addEventListener('dragleave',e=>{if(!block.contains(e.relatedTarget))cel.classList.remove('drag-over');});block.addEventListener('drop',e=>{if(draggedGroupId)return;e.preventDefault();e.stopPropagation();cel.classList.remove('drag-over');if(!dragMemberId)return;moveMember(dragMemberId,id);});groupsArea.insertBefore(block,poolSection);groupCountEl.textContent=groups.length;enableGroupDrag(block);return group;}
+    function createGroup(name,color){
+        const id='g'+(++groupIdSeq);
+        const group={id,name,color,members:[]};
+        groups.push(group);
+        const block=document.createElement('div');
+        block.className='group-block';
+        block.dataset.gid=id;
+        block.style.borderLeftColor=color;
+        // Inner structure: header + cards container with lead-row + members-row
+      block.innerHTML='<div class="group-header"><div class="group-color-swatch" style="background:'+color+'"></div><input class="group-name-input" type="text" value="'+name+'" readonly/><span class="group-count">0 members</span><button class="group-delete-btn" title="Delete group">\xd7</button></div><div class="group-cards"><div class="group-lead-row"></div><div class="group-members-row"></div></div>';
+        const inp=block.querySelector('.group-name-input');
+        inp.addEventListener('dblclick',()=>{inp.removeAttribute('readonly');inp.focus();inp.select();});
+        inp.addEventListener('blur',()=>{inp.setAttribute('readonly',true);group.name=inp.value||'Untitled';inp.value=group.name;});
+        inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+            block.querySelector('.group-delete-btn').addEventListener('click',()=>{
+                  const mc=[...group.members];
+        block.remove();
+                  groups=groups.filter(x=>x.id!==id);
+                  mc.forEach(mid=>{const m=TEAM.find(x=>x.id===mid);if(m)pool.appendChild(makeCard(m));});
+                  refreshGroupCounts();refreshPoolMsg();
+                  groupCountEl.textContent=groups.length;
+            });
+        const cel=block.querySelector('.group-cards');
+        const leadRow=block.querySelector('.group-lead-row');
+        const membersRow=block.querySelector('.group-members-row');
+        // Drop zones on both sub-rows and the whole cards area
+        makeDropZone(leadRow,id);
+        makeDropZone(membersRow,id);
+        makeDropZone(cel,id);
+        makeDropZone(block.querySelector('.group-header'),id);
+        block.addEventListener('dragover',e=>{if(draggedGroupId)return;e.preventDefault();cel.classList.add('drag-over');});
+        block.addEventListener('dragleave',e=>{if(!block.contains(e.relatedTarget))cel.classList.remove('drag-over');});
+        block.addEventListener('drop',e=>{if(draggedGroupId)return;e.preventDefault();e.stopPropagation();cel.classList.remove('drag-over');if(!dragMemberId)return;moveMember(dragMemberId,id);});
+        groupsArea.insertBefore(block,poolSection);
+        groupCountEl.textContent=groups.length;
+        enableGroupDrag(block);
+        return group;
+    }
 
     const modalOverlay=document.getElementById('modalOverlay'),modalGroupName=document.getElementById('modalGroupName'),colorPicker=document.getElementById('colorPicker');
     COLORS.forEach((c,i)=>{const dot=document.createElement('div');dot.className='color-dot'+(i===1?' selected':'');dot.style.background=c;dot.addEventListener('click',()=>{selectedColor=c;colorPicker.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('selected'));dot.classList.add('selected');});colorPicker.appendChild(dot);});
@@ -254,7 +375,7 @@
 
     makeDropZone(pool,'pool');
     TEAM.forEach(m=>pool.appendChild(makeCard(m)));
-    const towerGroup=createGroup('Tower Package',COLORS[0]);
+                        const towerGroup=createGroup('Tower Package',COLORS[0]);
     const podiumGroup=createGroup('Podium & Basement Package',COLORS[2]);
     const facadeGroup=createGroup('Facade Package',COLORS[5]);
     ['HA','YS','DE'].forEach(id=>moveMember(id,towerGroup.id));
@@ -267,23 +388,23 @@
     trashZone.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';trashZone.classList.add('trash-hover');});
     trashZone.addEventListener('dragleave',e=>{if(!trashZone.contains(e.relatedTarget))trashZone.classList.remove('trash-hover');});
     trashZone.addEventListener('drop',e=>{
-        e.preventDefault();e.stopPropagation();
+      e.preventDefault();e.stopPropagation();
         trashZone.classList.remove('trash-hover');
-       const data=e.dataTransfer.getData('text/plain');
+        const data=e.dataTransfer.getData('text/plain');
         if(data.startsWith('group:')){
               const gid=data.replace('group:','');
               const block=document.querySelector('[data-gid="'+gid+'"]');
               if(!block)return;
-        const memberCards=block.querySelectorAll('.card');
+              const memberCards=block.querySelectorAll('.card');
               memberCards.forEach(card=>{const mid=card.dataset.mid;const m=TEAM.find(x=>x.id===mid);if(m)pool.appendChild(makeCard(m));});
-              groups=groups.filter(g=>g.id!==gid);
-        block.remove();
+        groups=groups.filter(g=>g.id!==gid);
+              block.remove();
               groupCountEl.textContent=groups.length;
               refreshPoolMsg();
         } else {
               const mid=data;
               if(!mid)return;
-              document.querySelectorAll('[data-mid="'+mid+'"]').forEach(el=>el.remove());
+        document.querySelectorAll('[data-mid="'+mid+'"]').forEach(el=>el.remove());
               groups.forEach(g=>{g.members=g.members.filter(m=>m!==mid);});
               refreshGroupCounts();
               refreshPoolMsg();

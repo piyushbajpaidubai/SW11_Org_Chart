@@ -41,7 +41,7 @@ h1 span{color:var(--gold)}
 .card:hover{border-color:var(--gold);box-shadow:0 6px 20px rgba(160,120,42,0.12)}
 .card:hover::before{opacity:1}
 .card.dragging{opacity:0.4;cursor:grabbing;transform:scale(0.95)}
-.card.lead{min-width:205px;padding:19px 25px;border:1px solid var(--gold);box-shadow:0 4px 20px rgba(160,120,42,0.16);cursor:default;white-space:normal}
+.card.lead{min-width:205px;padding:19px 25px;border:1px solid var(--gold);box-shadow:0 4px 20px rgba(160,120,42,0.16);cursor:default;white-space:normal;text-align:center;display:flex;flex-direction:column;align-items:center}
 .card.lead::before{opacity:0.7}
 .card.lead .card-role{color:var(--gold)}
 .card:not(.lead)::after{content:'⠃';position:absolute;top:6px;right:8px;font-size:11px;color:rgba(160,120,42,0.3);transition:color 0.2s}

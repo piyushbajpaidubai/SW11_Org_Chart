@@ -103,7 +103,15 @@
     footer span{color:var(--gold)}
     @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
     @media(max-width:600px){.meta-divider{display:none}.card{min-width:140px}}
-    </style>
+    
+  /* Arial font override */
+  *, *::before, *::after,
+  body, html,
+  h1, h2, h3, h4, h5, h6,
+  p, span, div, a, button, input, textarea, select, label {
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+  </style>
   </head>
   <body>
     <video id="bg-video" autoplay muted loop playsinline aria-hidden="true">
@@ -410,6 +418,108 @@
               refreshPoolMsg();
         }
     });
-  </script>
+  
+
+  // ── FREE-DRAG FOR SUB-GROUP BOXES ──────────────────────────────────────
+  (function initFreeDrag() {
+    let activeDrag = null, offsetX = 0, offsetY = 0, zCounter = 100;
+
+    function enableFreeDrag(block) {
+      const header = block.querySelector('.group-header');
+      if (!header || block._freeDrag) return;
+      block._freeDrag = true;
+      header.draggable = false;
+      header.style.cursor = 'grab';
+      header.ondragstart = function(e) { e.preventDefault(); e.stopPropagation(); return false; };
+      header.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.group-name-input') || e.target.closest('.group-delete-btn') || e.target.closest('.card')) return;
+        if (e.button !== 0) return;
+        e.preventDefault(); e.stopPropagation();
+        zCounter++; block.style.zIndex = zCounter;
+        const rect = block.getBoundingClientRect();
+        offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
+        activeDrag = block; header.style.cursor = 'grabbing';
+        block.style.opacity = '0.9'; block.style.boxShadow = '0 12px 40px rgba(0,0,0,0.2)';
+        block.style.transform = 'scale(1.02)';
+        function onMove(e) {
+          if (!activeDrag) return;
+          e.preventDefault();
+          const area = document.getElementById('groupsArea');
+          const ar = area.getBoundingClientRect();
+          let nl = e.clientX - ar.left - offsetX;
+          let nt = e.clientY - ar.top - offsetY + area.scrollTop;
+          nl = Math.max(-10, nl); nt = Math.max(0, nt);
+          activeDrag.style.left = nl + 'px'; activeDrag.style.top = nt + 'px';
+          const bb = nt + activeDrag.offsetHeight + 50;
+          const ps = document.getElementById('poolSection');
+          const pt = parseInt(ps.style.top) || 0;
+          if (bb > pt) { ps.style.top = (bb + 20) + 'px'; area.style.minHeight = (bb + ps.offsetHeight + 80) + 'px'; }
+        }
+        function onUp() {
+          if (!activeDrag) return;
+          activeDrag.style.opacity = ''; activeDrag.style.boxShadow = ''; activeDrag.style.transform = '';
+          header.style.cursor = 'grab'; activeDrag = null;
+          document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+      });
+    }
+
+    function layoutBlocksAbsolute() {
+      const area = document.getElementById('groupsArea');
+      if (!area) return;
+      const blocks = [...area.querySelectorAll('.group-block')];
+      const pool = document.getElementById('poolSection');
+      area.style.position = 'relative'; area.style.display = 'block';
+      area.style.flexDirection = ''; area.style.alignItems = ''; area.style.gap = '';
+      const aw = area.offsetWidth;
+      blocks.forEach(function(b, i) {
+        b.style.position = 'absolute'; b.style.margin = '0'; b.style.zIndex = '10';
+        const bw = b.offsetWidth || 300;
+        let top = 0; for (let j = 0; j < i; j++) top += (blocks[j].offsetHeight || 200) + 16;
+        b.style.left = ((aw - bw) / 2) + 'px'; b.style.top = top + 'px';
+        enableFreeDrag(b);
+      });
+      if (pool) {
+        let mb = 0;
+        blocks.forEach(function(b) { const t = parseInt(b.style.top)||0; if(t+b.offsetHeight>mb)mb=t+b.offsetHeight; });
+        pool.style.position = 'absolute'; pool.style.left = '50%'; pool.style.transform = 'translateX(-50%)';
+        pool.style.top = (mb + 30) + 'px'; area.style.minHeight = (mb + (pool.offsetHeight||200) + 80) + 'px';
+      }
+      const hint = document.querySelector('.toolbar-hint');
+      if (hint) hint.textContent = '\u00b7 Drag cards to assign \u00b7 Drop into groups \u00b7 Double-click group name to rename \u00b7 Drag group header to reposition \u00b7';
+    }
+
+    window.addEventListener('load', function() { setTimeout(layoutBlocksAbsolute, 900); });
+
+    const observer = new MutationObserver(function(muts) {
+      muts.forEach(function(m) { m.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1 && node.classList.contains('group-block')) {
+          setTimeout(function() {
+            const area = document.getElementById('groupsArea');
+            const blocks = [...area.querySelectorAll('.group-block')];
+            const pool = document.getElementById('poolSection');
+            let mb = 0;
+            blocks.forEach(function(b) { if(b!==node){const t=parseInt(b.style.top)||0;if(t+b.offsetHeight>mb)mb=t+b.offsetHeight;} });
+            node.style.position = 'absolute'; node.style.margin = '0'; node.style.zIndex = '10';
+            node.style.top = (mb + 12) + 'px';
+            const aw = area.offsetWidth; const bw = node.offsetWidth || 300;
+            node.style.left = ((aw - bw) / 2) + 'px';
+            enableFreeDrag(node);
+            if (pool) {
+              let mb2 = 0;
+              [...area.querySelectorAll('.group-block')].forEach(function(b) { const t=parseInt(b.style.top)||0; if(t+b.offsetHeight>mb2)mb2=t+b.offsetHeight; });
+              pool.style.top = (mb2 + 30) + 'px'; area.style.minHeight = (mb2 + pool.offsetHeight + 80) + 'px';
+            }
+          }, 60);
+        }
+      }); });
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      const area = document.getElementById('groupsArea');
+      if (area) observer.observe(area, { childList: true });
+    });
+  })();
+</script>
   </body>
 </html>

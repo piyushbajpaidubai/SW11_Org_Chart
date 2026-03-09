@@ -14,7 +14,7 @@
     #bg-wash{position:fixed;inset:0;z-index:-1;background:rgba(250,248,245,0.58);pointer-events:none}
     header{text-align:center;padding:52px 24px 32px;position:relative;z-index:1}
     header::after{content:'';display:block;width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:24px auto 0}
-    .project-label{font-size:10px;font-weight:600;letter-spacing:0.35em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;opacity:0;animation:fadeUp 0.8s 0.1s forwards}
+    .project-label{position:absolute;top:20px;left:24px;font-size:14px;font-weight:700;letter-spacing:0;color:#000000;text-transform:none;margin-bottom:0;opacity:0;animation:0.8s ease 0.1s 1 normal forwards running fadeUp;z-index:2}
     h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(30px,5vw,60px);letter-spacing:0.04em;line-height:1.1;color:var(--text);opacity:0;animation:fadeUp 0.8s 0.25s forwards}
     h1 span{color:var(--gold)}
     .subtitle{font-size:10px;font-weight:300;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase;margin-top:10px;opacity:0;animation:fadeUp 0.8s 0.4s forwards}
@@ -130,7 +130,7 @@
     </video>
     <div id="bg-wash"></div>
     <header>
-        <p class="project-label">Design Tomorrow &middot; Project #DT0025</p>
+        <p class="project-label">DesignTomorrow</p>
         <h1>Dubai Creek Harbour<br/><span>SW11</span></h1>
       <p class="subtitle">Lead Design Consultancy &middot; Project Team Structure</p>
     </header>

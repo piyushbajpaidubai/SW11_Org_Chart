@@ -75,8 +75,8 @@
     /* Hierarchy layout: lead row on top, members row below */
     .group-cards{display:flex;flex-direction:column;gap:8px;padding:10px 12px;min-height:0;transition:background 0.2s}
     .group-cards.drag-over{background:rgba(160,120,42,0.04);border-radius:0 0 6px 6px}
-    .group-lead-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
-    .group-members-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+    .group-lead-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:center}
+    .group-members-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:center}
     /* Style the lead card inside a group differently to show hierarchy */
     .group-lead-row .card{border-left:2px solid var(--gold);background:rgba(255,255,255,0.95)}
     .group-lead-row .card::before{opacity:0.5}

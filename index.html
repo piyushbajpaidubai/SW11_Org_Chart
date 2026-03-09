@@ -14,7 +14,7 @@
     #bg-wash{position:fixed;inset:0;z-index:-1;background:rgba(250,248,245,0.58);pointer-events:none}
     header{text-align:center;padding:52px 24px 32px;position:relative;z-index:1}
     header::after{content:'';display:block;width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:24px auto 0}
-    .project-label{position:absolute;top:20px;left:24px;font-size:14px;font-weight:700;letter-spacing:0;color:#000000;text-transform:none;margin-bottom:0;opacity:0;animation:0.8s ease 0.1s 1 normal forwards running fadeUp;z-index:2}
+    .project-label{position:absolute;top:20px;lehft:24px;font-size:14px;font-weight:700;letter-spacing:0;color:#000000;text-transform:none;margin-bottom:0;opacity:0;animation:0.8s ease 0.1s 1 normal forwards running fadeUp;z-index:2}
     h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(30px,5vw,60px);letter-spacing:0.04em;line-height:1.1;color:var(--text);opacity:0;animation:fadeUp 0.8s 0.25s forwards}
     h1 span{color:var(--gold)}
     .subtitle{font-size:10px;font-weight:300;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase;margin-top:10px;opacity:0;animation:fadeUp 0.8s 0.4s forwards}
@@ -47,8 +47,8 @@
     .card.lead .card-role{color:var(--gold)}
     .card:not(.lead)::after{content:'⠃';position:absolute;top:6px;right:8px;font-size:11px;color:rgba(160,120,42,0.3);transition:color 0.2s}
     .card:not(.lead):hover::after{color:var(--gold)}
-    .card-initials{width:34px;height:34px;border-radius:50%;background:var(--gold-dim);border:1px solid rgba(160,120,42,0.25);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--gold);margin-bottom:8px}
-    .card.lead .card-initials{width:42px;height:42px;font-size:15px}
+    .card-initials{width:34px;height:34px;border-radius:50%;background:var(--gold-dim);border:1px solid rgba(160,120,42,0.25);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--gold);margin-bottom:8px}.card-photo{width:34px;height:34px;border-radius:50%;object-fit:cover;margin-bottom:8px;display:block}
+    .card.lead .card-initials{width:42px;height:42px;font-size:15px}.card.lead .card-photo{width:42px;height:42px}
     .card-name{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;line-height:1.3;color:var(--text)}
     .card-role{font-size:9px;font-weight:300;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px}
     /* Sub-groups: center-aligned with 10px gap from staff box */
@@ -155,7 +155,7 @@
   <div class="chart-section">
     <div class="lead-row">
         <div class="card lead">
-              <div class="card-initials">MY</div>
+              <img class="card-photo" src="https://designtomorrow.com/wp-content/uploads/2025/10/Mune.png" alt="Munehiko Yokomatsu">
               <div class="card-name">Munehiko Yokomatsu</div>
               <div class="card-role">Director</div>
         </div>
@@ -163,7 +163,7 @@
     <div class="tree-connector"><div class="horiz-wrap"><div class="vert"></div></div></div>
     <div class="lead-row">
         <div class="card lead">
-              <div class="card-initials">GS</div>
+              <img class="card-photo" src="https://designtomorrow.com/wp-content/uploads/2023/10/George.jpg" alt="George Soare">
               <div class="card-name">George Soare</div>
               <div class="card-role">Project Lead &middot; Associate</div>
         </div>
@@ -205,15 +205,15 @@
     const LEAD_ROLES=['Technical Lead','Team Lead'];
 
     const TEAM=[
-      {id:'SM',name:'Salvador Murino',role:'Team Lead'},
-      {id:'YS',name:'Yara Soliman',role:'Design Architect'},
-      {id:'DE',name:'Dina Elfaham',role:'Design Architect'},
-      {id:'BC',name:'Bruno Cassol',role:'BIM Lead'},
-      {id:'NM',name:'Nadim Mourad',role:'Technical Coordinator'},
-      {id:'YK',name:'Yomna Kasem',role:'Designer'},
-      {id:'KF',name:'Karim Fattal',role:'Designer'},
-      {id:'RE',name:'Reem Ekay',role:'Junior Designer'},
-      {id:'SS',name:'Sapta Sunusae',role:'Design Support'},
+      {id:'SM',name:'Salvador Murino',role:'Team Lead',photo:'https://designtomorrow.com/wp-content/uploads/2025/10/salva.png'},
+      {id:'YS',name:'Yara Soliman',role:'Design Architect',photo:'https://designtomorrow.com/wp-content/uploads/2024/08/Yara.jpg'},
+      {id:'DE',name:'Dina Elfaham',role:'Design Architect',photo:'https://designtomorrow.com/wp-content/uploads/2025/06/Dina_Website-scaled.jpg'},
+      {id:'BC',name:'Bruno Cassol',role:'BIM Lead',photo:'https://designtomorrow.com/wp-content/uploads/2026/02/Bruno-gemini.png'},
+      {id:'NM',name:'Nadim Mourad',role:'Technical Coordinator',photo:'https://designtomorrow.com/wp-content/uploads/2026/02/Nadim-New.png'},
+      
+      {id:'KF',name:'Karim Fattal',role:'Designer',photo:'https://designtomorrow.com/wp-content/uploads/2025/06/Karim_ForWebsite-scaled.jpg'},
+      
+      {id:'SS',name:'Sapta Sunusae',role:'Design Support',photo:'https://designtomorrow.com/wp-content/uploads/2025/12/Sapta_BNW.png'},
       {id:'HA',name:'Hanan Adel Hassan',role:'Technical Lead'},
       {id:'AN',name:'Andrea',role:'Technical Lead'}
       ];
@@ -228,7 +228,7 @@
             el.className='card';
             el.draggable=true;
             el.dataset.mid=m.id;
-            el.innerHTML='<div class="card-initials">'+m.id+'</div><div class="card-name">'+m.name+'</div><div class="card-role">'+m.role+'</div>';
+            el.innerHTML=(m.photo?'<img class="card-photo" src="'+m.photo+'" alt="'+m.name+'">'  :'<div class="card-initials">'+m.id+'</div>')+'<div class="card-name">'+m.name+'</div><div class="card-role">'+m.role+'</div>';
             el.addEventListener('dragstart',e=>{
                   dragMemberId=m.id;
                   draggedGroupId=null;

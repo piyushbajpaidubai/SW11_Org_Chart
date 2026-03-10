@@ -20,7 +20,7 @@
     .subtitle{font-size:10px;font-weight:300;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase;margin-top:10px;opacity:0;animation:fadeUp 0.8s 0.4s forwards}
     .meta-bar{display:flex;justify-content:center;gap:48px;padding:16px 24px;flex-wrap:wrap;position:relative;z-index:1;opacity:0;animation:fadeUp 0.8s 0.45s forwards}
     .meta-item{text-align:center}
-    .meta-item .val{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold)}
+    .meta-item .val{font-family:'Cormorant Garamond',serif;font-size:26px;color:hvar(--gold)}
     .meta-item .lbl{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-top:2px}
     .meta-divider{width:1px;background:var(--border);align-self:stretch}
     .toolbar{display:flex;justify-content:center;align-items:center;gap:10px;padding:12px 24px 4px;position:relative;z-index:10;flex-wrap:wrap;opacity:0;animation:fadeUp 0.8s 0.5s forwards}
@@ -172,7 +172,7 @@
     <div class="tree-connector hidden"><div class="horiz-wrap"><div class="vert"></div><div class="h-line"></div></div></div>
     <div class="groups-area" id="groupsArea">
         <div id="poolSection">
-              <p class="pool-label">Team Members</p>
+              <p class="pool-label">BIM</p>
               <div class="pool-grid" id="pool"></div>
         </div>
     </div>
@@ -476,6 +476,44 @@
       });
     }
 
+        function enablePoolDrag(poolSec) {
+                if (!poolSec || poolSec._freeDrag) return;
+                poolSec._freeDrag = true;
+                const label = poolSec.querySelector('.pool-label');
+                if (!label) return;
+                label.style.cursor = 'grab';
+                let activeDrag = null, offsetX = 0, offsetY = 0;
+                label.addEventListener('mousedown', function(e) {
+                          if (e.button !== 0) return;
+                          e.preventDefault(); e.stopPropagation();
+                          const rect = poolSec.getBoundingClientRect();
+                          offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
+                          activeDrag = poolSec;
+                          label.style.cursor = 'grabbing';
+                          poolSec.style.opacity = '0.9';
+                          poolSec.style.boxShadow = '0 12px 40px rgba(0,0,0,0.2)';
+                          function onMove(e) {
+                                      if (!activeDrag) return; e.preventDefault();
+                                      const area = document.getElementById('groupsArea');
+                                      const ar = area.getBoundingClientRect();
+                                      let nl = e.clientX - ar.left - offsetX;
+                                      let nt = e.clientY - ar.top - offsetY + area.scrollTop;
+                                      nl = Math.max(-10, nl); nt = Math.max(0, nt);
+                                      activeDrag.style.left = nl + 'px'; activeDrag.style.top = nt + 'px';
+                                      activeDrag.style.transform = 'none';
+                          }
+                          function onUp() {
+                                      if (!activeDrag) return;
+                                      activeDrag.style.opacity = ''; activeDrag.style.boxShadow = '';
+                                      label.style.cursor = 'grab'; activeDrag = null;
+                                      document.removeEventListener('mousemove', onMove);
+                                      document.removeEventListener('mouseup', onUp);
+                          }
+                          document.addEventListener('mousemove', onMove);
+                          document.addEventListener('mouseup', onUp);
+                });
+    }
+
     function layoutBlocksAbsolute() {
       const area = document.getElementById('groupsArea');
       if (!area) return;
@@ -497,6 +535,7 @@
         pool.style.position = 'absolute'; pool.style.left = '50%'; pool.style.transform = 'translateX(-50%)';
         pool.style.top = (mb + 30) + 'px'; area.style.minHeight = (mb + (pool.offsetHeight||200) + 80) + 'px';
       }
+        enablePoolDrag(pool);
       const hint = document.querySelector('.toolbar-hint');
       if (hint) hint.textContent = '\u00b7 Drag cards to assign \u00b7 Drop into groups \u00b7 Double-click group name to rename \u00b7 Drag group header to reposition \u00b7';
     }
